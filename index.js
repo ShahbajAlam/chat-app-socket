@@ -9,6 +9,17 @@ const io = socketIO(server);
 
 const users = new Set();
 
+function timeFormatter(date) {
+    let hours = date.getHours();
+    const am_pm = hours >= 12 ? "PM" : "AM";
+    hours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+    const minutes = date.getMinutes();
+    return `${String(hours).padStart(2, 0)}:${String(minutes).padStart(
+        2,
+        0
+    )} ${am_pm}`;
+}
+
 function getName(id) {
     let userName = "";
     users.forEach((user) => {
@@ -32,10 +43,9 @@ io.on("connection", (socket) => {
 
     socket.on("joinRoom", ({ room, userName }) => {
         socket.join(room);
-        users.add({ id, userName, room });
-    });
 
-    socket.on("joined", ({ userName, room }) => {
+        users.add({ id, userName, room });
+
         socket.emit("getId", { id });
 
         socket.emit("welcomeMessage", {
@@ -63,14 +73,15 @@ io.on("connection", (socket) => {
         removeUser(id);
     });
 
-    socket.on("message", ({ id, room, message }) => {
+    socket.on("message", ({ id, room, message, time }) => {
         socket.to(room).emit("receiveMessage", {
             id,
             type: "",
             message,
+            time: timeFormatter(time),
             userName: getName(id),
         });
     });
 });
 
-server.listen(8000);
+server.listen(8085);
